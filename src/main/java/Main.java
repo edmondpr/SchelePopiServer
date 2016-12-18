@@ -20,13 +20,7 @@ public class Main {
         port(getHerokuAssignedPort());
         get("/hello", (req, res) -> "Hello Panouri World");
 
-        Spark.get("/users", new Route() {
-            public Object handle(Request request, Response response) {
-                return  "User: username=test, email=test@test.net";
-            }
-        });
-
-        connectToDB();
+        setEndpoints();
     }
 
     static int getHerokuAssignedPort() {
@@ -37,7 +31,7 @@ public class Main {
         return 4567;
     }
 
-    private static void connectToDB() {
+    private static void setEndpoints() {
         String databaseUrl = Utility.DB_URL;
 
         try {
@@ -45,50 +39,8 @@ public class Main {
             ((JdbcConnectionSource)connectionSource).setUsername(Utility.DB_USER);
             ((JdbcConnectionSource)connectionSource).setPassword(Utility.DB_PASSWORD);
 
-            Dao<User,String> userDao = DaoManager.createDao(connectionSource, User.class);
-            TableUtils.createTableIfNotExists(connectionSource, User.class);
-
-            post("/users", (request, response) -> {
-                try {
-                    String username = request.queryParams("username");
-                    String email = request.queryParams("email");
-
-                    User user = new User();
-                    user.setUsername(username);
-                    user.setEmail(email);
-
-                    try {
-                        userDao.create(user);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-
-                    response.status(201);
-                    response.type("application/json");
-                    return user;
-                } catch (Exception e) {
-                    return "";
-                }
-            });
-
-            Spark.get("/users/:id", new Route() {
-                @Override
-                public Object handle(Request request, Response response) {
-                    try {
-                        User user = userDao.queryForId(request.params(":id"));
-                        if (user != null) {
-                            return "Username: " + user.getUsername(); // or JSON? :-)
-                        } else {
-                            response.status(404); // 404 Not found
-                            return "User not found";
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                    return response;
-                }
-            });
-
+            Endpoints.setUserEndpoints(connectionSource);
+            Endpoints.setClientEndpoints(connectionSource);
 
         } catch (SQLException e) {
             e.printStackTrace();
