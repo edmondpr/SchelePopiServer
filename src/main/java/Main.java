@@ -18,7 +18,7 @@ public class Main {
 
     public static void main(String[] args) {
         port(getHerokuAssignedPort());
-        get("/hello", (req, res) -> "Hello Schele World");
+        get("/hello", (req, res) -> "Hello Panouri World");
 
         Spark.get("/users", new Route() {
             public Object handle(Request request, Response response) {
